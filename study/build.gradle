@@ -16,7 +16,7 @@ apply plugin: 'io.fabric'
 repositories {
     maven { url 'https://maven.fabric.io/public' }
 }
-
+/* PSU Project signing is not required
 def store_file = "keystore_missing"
 if ( hasProperty('MD2K_RELEASE_STORE_FILE') ) {
     store_file = MD2K_RELEASE_STORE_FILE
@@ -53,7 +53,7 @@ if ( hasProperty('MD2K_RELEASE_KEY_PASSWORD') ) {
 } else {
     println "ERROR: " + key_password
 }
-
+*/
 android {
     compileSdkVersion 25
     buildToolsVersion '25.0.2'
@@ -68,11 +68,11 @@ android {
     }
     signingConfigs {
         release {
-
-            storeFile file(store_file)
-            storePassword store_password
-            keyAlias key_alias
-            keyPassword key_password
+            // PSU Project signing is not required
+            // storeFile file(store_file)
+            // storePassword store_password
+            // keyAlias key_alias
+            // keyPassword key_password
         }
     }
     buildTypes {

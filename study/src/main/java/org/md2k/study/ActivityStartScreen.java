@@ -321,7 +321,8 @@ public class ActivityStartScreen extends AppCompatActivity {
     private void setTextVersion() {
         try {
             ((TextView) findViewById(R.id.text_view_version)).setMovementMethod(LinkMovementMethod.getInstance());
-            String version = "Version: " + getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            // PSU Add Local Build Information
+            String version = "Version: " + getPackageManager().getPackageInfo(getPackageName(), 0).versionName + " PSU Build 20170418";
             ((TextView) findViewById(R.id.text_view_version)).setText(version);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
