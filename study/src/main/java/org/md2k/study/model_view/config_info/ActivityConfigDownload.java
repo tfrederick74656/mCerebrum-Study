@@ -75,36 +75,69 @@ public class ActivityConfigDownload extends Activity {
         Log.d(TAG, "showDownloadConfig()...");
         String filename=MySharedPref.getInstance(this).read(Constants.CONFIG_ZIP_FILENAME);
         if(filename==null) filename="";
-        alertDialogEditText(this, "Download Configuration File", "Please enter the file name (example: default)", filename, R.drawable.ic_download_teal_48dp, "Ok", "Cancel", new OnClickListener() {
+        // TJF Modify the toast text here to indicate the override prefixes.
+        // alertDialogEditText(this, "Download Configuration File", "Please enter the file name (example: default)", filename, R.drawable.ic_download_teal_48dp, "Ok", "Cancel", new OnClickListener() {
+        alertDialogEditText(this, "Download Configuration File", "Please enter the file name (example: default). Prefix *L for a local file, or *U for a full custom URL", filename, R.drawable.ic_download_teal_48dp, "Ok", "Cancel", new OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which, String result) {
                 if (which == DialogInterface.BUTTON_POSITIVE) {
-                    final String filename = result + ".zip";
+                    // TJF Just collect the filename here, don't qualify it with an extension yet.
+                    // final String filename = result + ".zip";
+                    final byte pathType;
+                    final String filename;
+
                     if (result.length() > 0) {
-                        Download download = new Download(ActivityConfigDownload.this, true, new OnCompletionListener() {
-                            @Override
-                            public void OnCompleted(int status) {
-                                if (status == Download.SUCCESS) {
-                                    ModelManager.getInstance(ActivityConfigDownload.this).clear();
-                                    FileManager.unzip(Constants.TEMP_DIRECTORY + filename, Constants.CONFIG_DIRECTORY_ROOT);
-                                    ModelManager.getInstance(ActivityConfigDownload.this).read();
-                                    ModelManager.getInstance(ActivityConfigDownload.this).set();
-                                    Intent returnIntent = new Intent();
-                                    setResult(Activity.RESULT_OK, returnIntent);
-                                    finish();
-                                } else {
-                                    Toast.makeText(ActivityConfigDownload.this, "Error!!! File not found...", Toast.LENGTH_LONG).show();
-                                    showDownloadConfig();
+
+                        // TJF Add switch statement here to determine how to construct the filename. Add log for debugging.
+                        switch (result.substring(0,2)) {
+                            case "*L": pathType = 1; result = result.substring(2); filename = result + ".zip"; break;
+                            case "*U": pathType = 2; result = result.substring(2); filename = result; break;
+                            default: pathType = 0; filename = result + ".zip"; break;
+                        }
+                        Log.d(TAG, "Path Type=" + pathType + " Filename=" + filename);
+
+                        // TJF If we're using a local file, fake the download success
+                        if (pathType == 1) {
+                            ModelManager.getInstance(ActivityConfigDownload.this).clear();
+                            // TJF Update the source directory to pull from the root of the SD card
+                            FileManager.unzip(Constants.CONFIG_DIRECTORY_ROOT + filename, Constants.CONFIG_DIRECTORY_ROOT);
+                            ModelManager.getInstance(ActivityConfigDownload.this).read();
+                            ModelManager.getInstance(ActivityConfigDownload.this).set();
+                            Intent returnIntent = new Intent();
+                            setResult(Activity.RESULT_OK, returnIntent);
+                            finish();
+                        } else { // TJF Otherwise, do the normal download thing
+                            Download download = new Download(ActivityConfigDownload.this, true, new OnCompletionListener() {
+                                @Override
+                                public void OnCompleted(int status) {
+                                    if (status == Download.SUCCESS) {
+                                        ModelManager.getInstance(ActivityConfigDownload.this).clear();
+                                        FileManager.unzip(Constants.TEMP_DIRECTORY + filename, Constants.CONFIG_DIRECTORY_ROOT);
+                                        ModelManager.getInstance(ActivityConfigDownload.this).read();
+                                        ModelManager.getInstance(ActivityConfigDownload.this).set();
+                                        Intent returnIntent = new Intent();
+                                        setResult(Activity.RESULT_OK, returnIntent);
+                                        finish();
+                                    } else {
+                                        Toast.makeText(ActivityConfigDownload.this, "Error!!! File not found...", Toast.LENGTH_LONG).show();
+                                        showDownloadConfig();
+                                    }
                                 }
+                            });
+                            try {
+                                // TJF If this download if from the normal MD2K GitHub URL, do the usual stuff.
+                                if (pathType == 0) {
+                                    String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+                                    int lastDot = version.lastIndexOf('.');
+                                    String configVersion = version.substring(0, lastDot);
+                                    download.execute(Constants.CONFIG_DOWNLOAD_LINK + configVersion + "/" + filename, filename);
+                                } else { // TJF Otherwise, trim the filename appropriately.
+                                    Toast.makeText(ActivityConfigDownload.this, "Debug: " + filename.substring(filename.lastIndexOf('/')+1), Toast.LENGTH_LONG).show();
+                                    download.execute(filename, filename.substring(filename.lastIndexOf('/')+1));
+                                }
+                            } catch (PackageManager.NameNotFoundException e) {
+                                e.printStackTrace();
                             }
-                        });
-                        try {
-                            String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-                            int lastDot = version.lastIndexOf('.');
-                            String configVersion = version.substring(0, lastDot);
-                            download.execute(Constants.CONFIG_DOWNLOAD_LINK + configVersion + "/" + filename, filename);
-                        } catch (PackageManager.NameNotFoundException e) {
-                            e.printStackTrace();
                         }
                     } else
                         showDownloadConfig();

@@ -16,7 +16,7 @@ apply plugin: 'io.fabric'
 repositories {
     maven { url 'https://maven.fabric.io/public' }
 }
-
+/* TJF We don't need signing for this project
 def store_file = "keystore_missing"
 if ( hasProperty('MD2K_RELEASE_STORE_FILE') ) {
     store_file = MD2K_RELEASE_STORE_FILE
@@ -53,13 +53,15 @@ if ( hasProperty('MD2K_RELEASE_KEY_PASSWORD') ) {
 } else {
     println "ERROR: " + key_password
 }
-
+*/
 android {
     compileSdkVersion 23
     buildToolsVersion '23.0.2'
     defaultConfig {
         applicationId 'org.md2k.study'
         minSdkVersion 19
+        // TJF Adjust Target SDK for 4.4.4
+        // targetSdkVersion 21
         targetSdkVersion 21
         versionCode buildVersionCode()
         versionName version
@@ -68,11 +70,10 @@ android {
     }
     signingConfigs {
         release {
-
-            storeFile file(store_file)
-            storePassword store_password
-            keyAlias key_alias
-            keyPassword key_password
+            storeFile file('Unrecognized Value')
+            storePassword 'Unrecognized Value'
+            keyAlias 'Unrecognized Value'
+            keyPassword 'Unrecognized Value'
         }
     }
     buildTypes {
